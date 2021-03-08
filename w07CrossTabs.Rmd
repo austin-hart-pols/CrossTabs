@@ -1,0 +1,195 @@
+---
+title: "DESCRIBING RELATIONSHIPS"
+subtitle: "2. Cross&ndash;Tabulation"
+author: "Austin Hart"
+institute: "American University"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: [default, rladies, rladies-fonts]
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  message=FALSE, warning=FALSE, eval = TRUE, echo = FALSE, 
+  fig.align = 'center', dev='svg'
+)
+```
+
+```{r results='hide'}
+library(tidyverse)
+library(magrittr)
+library(kableExtra)
+
+film = readxl::read_excel("biopics.xls")
+```
+
+
+# Cross&ndash;Tabulation
+
+
+Assessing the relationship between:  
+
+- Nominal exposure variable (X)  
+
+- Nominal outcome variable (Y)  
+
+
+Data used: "biopics.xls"
+
+
+---
+# Basic tabulation revisited
+
+.pull-left[
+
+Women's representation among 761 biopic stars, 1915&ndash;2014.
+  
+
+```{r sumtab}
+  tab = 
+    film %>%
+    count(SubjectSex) %>%
+    mutate(
+      Percent = 100 * n/sum(n)
+    ) 
+
+  tab %>%
+    kbl(digits = 1, format = "html", caption = "Biopic Stars",
+        col.names = c("","N","%")) %>%
+    kable_paper(bootstrap_options = "striped", full_width = F, position = "center") %>%
+    column_spec(3, bold = T)
+
+```
+
+]
+
+.pull-right[
+
+```{r boxsum, fig.width=3.5, fig.height=5, dpi=200}
+  barplot(Percent ~ SubjectSex, data = tab,
+        main = "Biopic Stars, 1915-2014", xlab = NULL,
+        ylim = c(0,100), col="#69b3a2")
+```
+
+]
+
+
+---
+# Cross&ndash;Tabulation
+
+> Does the distribution on the outcome (i.e. relative frequency table) differ by groups?
+
+- Build a cross&ndash;table: groups define the columns!
+
+- Compare the distribution by group
+
+
+---
+# Building a cross&ndash;table
+
+### Representation by era
+
+```{r sumtabgrp1}
+  film %>%
+    filter(Period == "1965--1999") %>%
+    count(SubjectSex) %>%
+    mutate(Percent = 100 * n/sum(n)) %>%
+    kbl(digits = 1, format = "html", caption = "1965-1999",
+        col.names = c("","n","%")) %>%
+    kable_paper(bootstrap_options = "striped", full_width = F, position = "center") %>%
+    column_spec(3, bold = T)
+
+```
+
+
+.pull-left[
+
+
+```{r sumtabgrp3}
+  film %>%
+    filter(Period == "1915--1965") %>%
+    count(SubjectSex) %>%
+    mutate(Percent = 100 * n/sum(n)) %>%
+    kbl(digits = 1, format = "html", caption = "1915-1964",
+        col.names = c("","n","%")) %>%
+    kable_paper(bootstrap_options = "striped", full_width = F, position = "center") %>%
+    column_spec(3, bold = T)
+
+``` 
+
+]
+
+.pull-right[
+
+```{r sumtabgrp2}
+  film %>%
+    filter(Period == "2000--2014") %>%
+    count(SubjectSex) %>%
+    mutate(Percent = 100 * n/sum(n)) %>%
+    kbl(digits = 1, format = "html", caption = "2000-2014",
+        col.names = c("","n","%")) %>%
+    kable_paper(bootstrap_options = "striped", full_width = F, position = "center") %>%
+    column_spec(3, bold = T)
+
+```
+
+]
+
+
+---
+# A full cross&ndash;tabulation
+
+### Change in representation over time?
+
+```{r xtabs}
+  xtab =
+    film %>% 
+    count(SubjectSex,Period) %>%  
+    na.omit() %>%
+    pivot_wider(
+      names_from = Period,
+      values_from = n, 
+      values_fill = 0
+    ) %>%
+    mutate_if(
+      is.integer, list(Percent = ~./sum(.) * 100)
+    ) %>% 
+    select(SubjectSex,sort(tidyselect::peek_vars()))
+
+  xtab %>%
+    kbl(digits = 1, format = "html", caption = "Biopic Stars by Era",
+        col.names = c(" ","n","%","n","%","n","%")) %>%
+    kable_paper(bootstrap_options = "striped", full_width = F, position = "center") %>%
+    column_spec(c(3,5,7), bold = T) %>%
+    add_header_above(c(" " = 1,"1915-64" = 2, "1965-99" = 2, "2000-14" = 2))
+```
+
+
+---
+class: inverse
+
+# Tabular analysis
+
+
+- Assessing relationship between:  
+
+  - Nominal xposure variable (X)  
+
+  - Nominal outcome variable (Y)  
+
+- Process: tabulate by group and compare!  
+  
+- More info  
+
+  - R replication script  
+  
+  - R Survival Guide  
+  
+  - Textbook chapter
